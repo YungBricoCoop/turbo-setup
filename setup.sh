@@ -242,6 +242,9 @@ else
     echo -e "${O}[USER]${NC} *authorized_keys* file already exists, proceeding..."
 fi
 
+# append the public key to the authorized keys
+cat /home/$USER/.ssh/id_rsa.pub >> /home/$USER/.ssh/authorized_keys
+
 
 # [SSH] update ssh config to use a non-default port
 if grep -q "^#Port 22$" "$SSH_CONFIG_FILE"; then
