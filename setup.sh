@@ -76,7 +76,7 @@ todo(){
 
 # args
 USER=""
-FOLDER=""
+FOLDER_NAME=""
 FAIL2BAN_CONFIG_FILE="./fail2ban.conf"
 COWRIE_CONFIG_FILE="./cowrie.conf"
 COWRIE_DB_FILE="./cowrie.db"
@@ -112,7 +112,7 @@ while getopts ":u:f:fc:cc:cd:cs:s:c:" opt; do
       USER=$OPTARG
       ;;
     f )
-      FOLDER=$OPTARG	
+      FOLDER_NAME=$OPTARG	
       ;;
     fc )
       FAIL2BAN_CONFIG_FILE=$OPTARG	
@@ -147,7 +147,7 @@ while getopts ":u:f:fc:cc:cd:cs:s:c:" opt; do
 done
 
 # check if required args are provided
-if [ -z "$USER" ] || [ -z "$FOLDER" ]; then
+if [ -z "$USER" ] || [ -z "$FOLDER_NAME" ]; then
     echo "Both -u (user) and -f (folder) options are required."
     usage
 fi
@@ -220,10 +220,23 @@ else
 fi
 
 # create the folder if it doesn't already exist
-mkdir -p /opt/$FOLDER
+FOLDER_PATH="/opt/$FOLDER_NAME"
+mkdir -p $FOLDER_PATH
 
 # give the user ownership of the folder
-chown $USER:$USER /opt/$FOLDER
+chown $USER:$USER $FOLDER_PATH
+
+# create a symbolic link that points to the $FOLDER_PATH and is located in /home/$USER if it doesn't already exist
+echo $FOLDER_PATH
+echo /home/$USER/$FOLDER_NAME
+if [ ! -L /home/$USER/$FOLDER_NAME ]; then
+	sudo -u $USER ln -s $FOLDER_PATH /home/$USER/$FOLDER_NAME
+	echo -e "${G}[USER]${NC} Symbolic link created."
+else
+	echo -e "${O}[USER]${NC} Symbolic link already exists, proceeding..."
+fi
+
+
 
 # generate the ssh key pair if it doesn't already exist
 if [ ! -f /home/$USER/.ssh/id_rsa ]; then
