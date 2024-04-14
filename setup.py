@@ -37,8 +37,16 @@ def print_info(category, message: str, debug: bool = False) -> None:
 def check_root():
     if os.getuid() == 0:
         return True
-    print_error("PERMISSION", "Please run this script as root")
+    print_error("REQUIREMENTS", "Please run this script as root")
 
+def check_os():
+    if sys.platform.startswith("linux"): 
+        if 'ubuntu' not in os.popen('cat /etc/os-release').read().lower():
+            print_warning("REQUIREMENTS", "This script was tested on Ubuntu 22.04. It may not work on other OS versions.")
+        
+        return True
+
+    print_error("REQUIREMENTS", "This script only works on [b]Linux[/]")
 
 def get_random_ssh_port():
     return randint(1024, 10000)
@@ -68,6 +76,8 @@ def main(
     debug: Annotated[bool, typer.Option(help="Enable debug mode")] = DEBUG,
 ):
     print_info("INFO", "Starting setup...")
+    
+    check_os()
     check_root()
 
 
