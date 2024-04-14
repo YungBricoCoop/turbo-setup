@@ -86,6 +86,10 @@ def chown_folder(folder: str, user: str):
     os.system(f"sudo chown {user}:{user} {folder}")
     print_info("FOLDER", f"{folder} permissions set to {user}")
 
+def chmod_file(file: str, mode: str):
+    os.system(f"sudo chmod {mode} {file}")
+    print_info("FILE", f"{file} permissions set to {mode}")
+
 def create_symlink(source: str, destination: str):
     try:
         os.symlink(source, destination)
@@ -101,6 +105,33 @@ def create_deployment_folder(folder: str, user: str):
     chown_folder(destination, user)
     chown_folder(home_destination, user)
     
+def create_file(file: str):
+    try:
+        os.system(f"touch {file}")
+        print_info("FILE", f"{file} created.")
+    except FileExistsError:
+        print_warning("FILE", f"{file} already exists, proceeding...")
+
+def generate_ssh_key_pair(user: str):
+    ssh_key_path = f"/home/{user}/.ssh/id_rsa"
+    ssh_pub_key_path = f"{ssh_key_path}.pub"
+    if not os.path.isfile(ssh_key_path):
+        os.system(f"sudo -u {user} ssh-keygen -t rsa -b 4096 -f {ssh_key_path} -N ''")
+        print_info("USER", "SSH key pair generated.")
+    else:
+        print_warning("USER", "SSH key pair already exists, proceeding...")
+
+    authorized_keys_path = f"/home/{user}/.ssh/authorized_keys"
+    if not os.path.isfile(authorized_keys_path):
+        create_file(authorized_keys_path)
+        chmod_file(authorized_keys_path, "600")
+        print_info("USER", "*authorized_keys* file created.")
+    else:
+        print_warning("USER", "*authorized_keys* file already exists, proceeding...")
+
+    with open(ssh_pub_key_path, "r") as ssh_pub_key:
+        with open(authorized_keys_path, "a") as authorized_keys:
+            authorized_keys.write(ssh_pub_key.read())
 
 def main(
     user: Annotated[str, typer.Argument(help="User used to deploy the app")],
@@ -134,6 +165,8 @@ def main(
     create_user(user, GROUP)
 
     create_deployment_folder(folder, user)
+
+    generate_ssh_key_pair(user)
 
 
 if __name__ == "__main__":
