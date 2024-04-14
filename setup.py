@@ -133,6 +133,35 @@ def generate_ssh_key_pair(user: str):
         with open(authorized_keys_path, "a") as authorized_keys:
             authorized_keys.write(ssh_pub_key.read())
 
+def update_ssh_config(ssh_port: str):
+    ssh_config_file = "/etc/ssh/sshd_config"
+    default_ssh_port = "22"
+    current_port = "22"
+
+    if not os.path.isfile(ssh_config_file):
+        print_error("SSH", f"SSH config file not found: {ssh_config_file}")
+    
+    with open(ssh_config_file, "r") as ssh_config:
+        lines = ssh_config.readlines()
+        for i, line in enumerate(lines):
+            if line.lower().startswith("#port 22"):
+                lines[i] = f"Port {ssh_port}\n"
+                break
+            
+            elif line.lower().startswith("port "):
+                current_port = line.split(" ")[1].strip()
+                break
+    
+    if current_port == default_ssh_port:
+        with open(ssh_config_file, "w") as ssh_config:
+            ssh_config.writelines(lines)
+            print_info("SSH", f"SSH server port changed to {ssh_port}")
+    
+        os.system("sudo systemctl restart sshd")
+        print_info("SSH", "SSH server restarted.")
+    else:
+        print_warning("SSH", f"Port is already set to {current_port}, proceeding...")
+
 def main(
     user: Annotated[str, typer.Argument(help="User used to deploy the app")],
     folder: Annotated[
@@ -167,6 +196,7 @@ def main(
     create_deployment_folder(folder, user)
 
     generate_ssh_key_pair(user)
+    update_ssh_config(ssh_port)
 
 
 if __name__ == "__main__":
