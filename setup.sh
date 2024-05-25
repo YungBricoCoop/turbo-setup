@@ -29,6 +29,7 @@
 #   -cs <cowrie_ssh_port>        Specify the Cowrie SSH port (default: $COWRIE_SSH_PORT)
 #   -s <ssh_port>               Specify the SSH port (default: $SSH_PORT)
 #   -c <cron_file>              Specify the cron file (default: $CRON_FILE)
+#   -t <timezone>               Specify the timezone (default: $TIMEZONE)
 #   -d <debug>                  Enable debug mode (default: 0)
 # Example:
 #   ./setup.sh -u myadmin -f myproject  
@@ -55,6 +56,7 @@ usage() {
     echo "  -cs <cowrie_ssh_port>        Specify the Cowrie SSH port (default: $COWRIE_SSH_PORT)"
     echo "  -s <ssh_port>               Specify the SSH port (default: $SSH_PORT)"
     echo "  -c <cron_file>              Specify the cron file (default: $CRON_FILE)"
+	echo "  -t <timezone>               Specify the timezone (default: $TIMEZONE)"
     echo "  -d <debug>                  Enable debug mode (default: 0)" # Not implemented yet
     exit 1
 }
@@ -83,6 +85,7 @@ COWRIE_DB_FILE="./cowrie.db"
 COWRIE_SSH_PORT="22"
 SSH_PORT="1234"
 CRON_FILE="./cron.conf"
+TIMEZONE="Europe/Zurich"
 DEBUG=0
 
 # constants
@@ -132,6 +135,9 @@ while getopts ":u:f:fc:cc:cd:cs:s:c:" opt; do
     c )
       CRON_FILE=$OPTARG
       ;;
+	t )
+	  TIMEZONE=$OPTARG
+	  ;;
     d )
       DEBUG=$OPTARG
       ;;
@@ -303,6 +309,10 @@ if [ -f "$CRON_FILE" ]; then
 else
     echo -e "${R}[CRON]${NC} Configuration file not found, proceeding..."
 fi
+
+# [TIMEZONE] set the timezone
+timedatectl set-timezone $TIMEZONE
+echo -e "${G}[TIMEZONE]${NC} Timezone set to $TIMEZONE"
 
 
 echo -e "${G}[SETUP]${NC} Setup process completed."
